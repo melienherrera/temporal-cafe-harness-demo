@@ -67,7 +67,7 @@ don't execute anything).
 
 Endpoints: `POST /api/brew`, `GET /api/brew/{id}/events` (SSE),
 `POST /api/brew/{id}/approve`, `POST /api/worker/kill`, `POST /api/worker/restart`,
-`GET /api/worker/status`.
+`GET /api/worker/status`, `GET /api/temporal-ui` (where the Web UI lives — local or Cloud).
 
 ## What to try
 

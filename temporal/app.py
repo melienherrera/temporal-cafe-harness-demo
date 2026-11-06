@@ -15,6 +15,7 @@ Run (from this temporal/ folder, with a dev server + worker already up):
 """
 import asyncio
 import json
+import os
 import subprocess
 import sys
 import uuid
@@ -104,6 +105,23 @@ async def brew() -> JSONResponse:
         task_queue=TASK_QUEUE,
     )
     return JSONResponse({"workflow_id": wf_id})
+
+
+@app.get("/api/temporal-ui")
+async def temporal_ui() -> JSONResponse:
+    """Where the Temporal Web UI lives — local dev server or Temporal Cloud."""
+    namespace = os.environ.get("TEMPORAL_NAMESPACE", "default")
+    if os.environ.get("TEMPORAL_API_KEY"):
+        base = "https://cloud.temporal.io"
+    else:
+        base = os.environ.get("TEMPORAL_UI_ADDRESS", "http://localhost:8233")
+    return JSONResponse(
+        {
+            "base_url": base,
+            "namespace": namespace,
+            "workflows_url": f"{base}/namespaces/{namespace}/workflows",
+        }
+    )
 
 
 @app.get("/api/worker/status")

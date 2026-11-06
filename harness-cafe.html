@@ -45,13 +45,6 @@
   .brand .kicker{font-size:10.5px;color:var(--faint);letter-spacing:.15em;text-transform:uppercase;max-width:118px;line-height:1.4;font-weight:600}
   .spacer{flex:1 1 40px}
 
-  .tbadge{
-    display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;
-    color:var(--foam);background:var(--indigo-soft);border:1px solid rgba(143,128,244,.4);
-    padding:6px 11px;border-radius:999px;letter-spacing:.02em;
-  }
-  .tbadge .bolt{color:var(--indigo)}
-  .tbadge b{color:var(--indigo);font-weight:700}
 
   .controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .toggle{
@@ -91,12 +84,15 @@
   .btn-approve:not(:disabled):hover{filter:brightness(1.07)}
   .btn-approve[hidden]{display:none}
   @keyframes approvePulse{0%,100%{box-shadow:0 6px 18px -8px rgba(143,128,244,.8)}50%{box-shadow:0 6px 22px -6px rgba(143,128,244,1)}}
-  .live-pill{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:.06em;
-    padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--faint);background:var(--panel-2);text-transform:uppercase}
-  .live-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--faint)}
-  .live-pill.live{color:var(--st-done);border-color:rgba(149,181,99,.5);background:rgba(149,181,99,.12)}
-  .live-pill.live .dot{background:var(--st-done);animation:pulseRun 1.4s infinite}
-  .live-pill.sim{color:var(--faint)}
+  /* one consolidated Temporal chip: brand in sim, live link to the UI when connected */
+  .t-chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;
+    color:var(--foam);background:var(--panel-2);border:1px solid var(--line);padding:6px 13px;border-radius:999px;
+    text-decoration:none;white-space:nowrap;transition:.16s}
+  .t-chip .t-lead{display:inline-flex;align-items:center;color:var(--indigo)}
+  .t-chip .t-ext{opacity:.75;font-size:11px}
+  .t-chip .live-dot{width:8px;height:8px;border-radius:50%;background:var(--st-done);animation:pulseRun 1.4s infinite}
+  .t-chip.live{color:#eaf3dc;border-color:rgba(149,181,99,.5);background:rgba(149,181,99,.12);cursor:pointer}
+  .t-chip.live:hover{border-color:var(--matcha);background:rgba(149,181,99,.2)}
 
   /* ---------- layout ---------- */
   main{
@@ -303,8 +299,11 @@
       <span class="kicker">The Agent Harness, Explained</span>
     </div>
     <div class="spacer"></div>
-    <div class="tbadge"><span class="bolt">⚡</span> Runs on <b>Temporal</b></div>
-    <span class="live-pill sim" id="livePill"><span class="dot"></span><span id="livePillText">Simulation</span></span>
+    <a class="t-chip" id="temporalChip" target="_blank" rel="noopener">
+      <span class="t-lead" id="tChipLead">⚡</span>
+      <span id="tChipText">Runs on Temporal</span>
+      <span class="t-ext" id="tChipExt" hidden>↗</span>
+    </a>
     <div class="controls">
       <button class="toggle" id="harnessToggle" data-on="true" aria-label="Toggle Temporal durability">
         <span class="lbl">Temporal</span><span class="switch"></span><span class="state">ON</span>
@@ -783,6 +782,7 @@ function resetState(full=true){
   events.innerHTML=''; events.style.display='none'; $('#wfEmpty').style.display='';
   wfStatus('idle','Idle'); $('#crashBtn').disabled=true; setBusy(false);
   { const ab=$('#approveBtn'); if(ab) ab.hidden=true; }
+  if(temporalUi) setTemporalUiLink(null);
   updateWarn(); setMode('idle');
   if(full){ $('#detail').classList.add('idle'); $('#hint').textContent='Runs one BrewEspresso workflow — six activities, in order.'; }
 }
@@ -795,6 +795,13 @@ function resetState(full=true){
 let LIVE=false;                 // backend detected?
 let liveStream=null;            // EventSource
 let liveWfId=null;
+let temporalUi=null;            // {base_url, namespace, workflows_url}
+
+function setTemporalUiLink(wfId){
+  const chip=$('#temporalChip'); if(!chip||!temporalUi) return;
+  chip.href = wfId ? `${temporalUi.base_url}/namespaces/${temporalUi.namespace}/workflows/${encodeURIComponent(wfId)}`
+                   : temporalUi.workflows_url;
+}
 const LIVE_ORDER=['grind','heat','pressure','sandbox','pull','observe'];
 const STAGE_IDX={starting:-1,grinding:0,heating:1,pressurizing:2,'locking portafilter':3,extracting:4,logging:5,done:6};
 let liveStepState={}, liveFlags={};
@@ -802,14 +809,24 @@ let liveStepState={}, liveFlags={};
 async function detectBackend(){
   try{ const r=await fetch('/api/health',{cache:'no-store'}); LIVE=r.ok; }
   catch(e){ LIVE=false; }
-  const pill=$('#livePill');
+  const chip=$('#temporalChip');
   if(LIVE){
-    pill.className='live-pill live'; $('#livePillText').textContent='Live · real Temporal';
     // The ON/OFF toggle is a simulation-only teaching device — hide it in live mode.
     // The crash button is REAL here: it kills the actual worker process.
     const tog=$('#harnessToggle'); if(tog) tog.style.display='none';
+    try{ temporalUi = await fetch('/api/temporal-ui').then(r=>r.json()); }catch(e){}
+    // Consolidated chip becomes the live indicator AND the link to the Temporal UI.
+    chip.classList.add('live');
+    $('#tChipLead').innerHTML='<span class="live-dot"></span>';
+    $('#tChipText').textContent='Live · Open in Temporal UI';
+    $('#tChipExt').hidden=false;
+    chip.title='Open in Temporal UI';
+    setTemporalUiLink(null);
   } else {
-    pill.className='live-pill sim'; $('#livePillText').textContent='Simulation';
+    chip.classList.remove('live'); chip.removeAttribute('href'); chip.removeAttribute('title');
+    $('#tChipLead').textContent='⚡';
+    $('#tChipText').textContent='Runs on Temporal';
+    $('#tChipExt').hidden=true;
   }
 }
 
@@ -883,6 +900,7 @@ async function livePull(){
   catch(e){ $('#hint').textContent='⚠️ Could not reach the backend. Is the worker + dev server running?'; running=false; setBusy(false); return; }
   liveWfId=res.workflow_id;
   setMode('workflow', liveWfId);
+  setTemporalUiLink(liveWfId);     // deep-link the button to this workflow
   $('#crashBtn').disabled=false;   // real kill-worker is now armed
   liveStream=new EventSource(`/api/brew/${liveWfId}/events`);
   liveStream.onmessage=(ev)=>{ let snap; try{ snap=JSON.parse(ev.data); }catch(_){ return; } applySnapshot(snap); };
