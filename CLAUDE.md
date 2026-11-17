@@ -28,8 +28,8 @@ It has two layers:
 **Live (real Temporal):** two processes — the app owns and manages the worker.
 ```bash
 temporal server start-dev --ui-port 8233          # dev server + UI
-cd temporal && uv run uvicorn app:app --port 8000 # serves the UI, spawns the worker
-# open http://localhost:8000
+cd temporal && uv run uvicorn app:app --port 8001 # serves the UI, spawns the worker
+# open http://localhost:8001
 ```
 Do **not** run `uv run worker.py` separately in live mode — a second worker would keep the
 workflow alive and break the kill-worker demo. (Running the worker/starter standalone is

@@ -47,13 +47,13 @@ can kill/restart it), so you only need the dev server + the app:
 # terminal 1: dev server
 temporal server start-dev --ui-port 8233
 # terminal 2: the app (it starts and manages the worker itself)
-uv run uvicorn app:app --port 8000
+uv run uvicorn app:app --port 8001
 ```
 
 > Don't also run `uv run worker.py` separately in live mode — a second worker
 > would keep the workflow alive and break the kill-worker demo.
 
-Open `http://localhost:8000`. The header shows **LIVE · real Temporal** and:
+Open `http://localhost:8001`. The header shows **LIVE · real Temporal** and:
 - **Pull the shot** starts a real `BrewEspressoWorkflow`; the middle panel reflects
   the actual workflow state over SSE.
 - At **Awaiting approval**, click **Approve — pull the shot** to send the real

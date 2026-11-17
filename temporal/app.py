@@ -11,7 +11,7 @@ Endpoints:
   POST /api/brew/{id}/approve   send the human-in-the-loop `approve` signal
 
 Run (from this temporal/ folder, with a dev server + worker already up):
-  uv run uvicorn app:app --port 8000
+  uv run uvicorn app:app --port 8001
 """
 import asyncio
 import json

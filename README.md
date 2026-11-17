@@ -33,10 +33,10 @@ Prereqs: [`temporal` CLI](https://docs.temporal.io/cli) and [`uv`](https://docs.
 temporal server start-dev --ui-port 8233
 
 # 2. the app — serves the UI and manages the worker itself
-cd temporal && uv run uvicorn app:app --port 8000
+cd temporal && uv run uvicorn app:app --port 8001
 ```
 
-Open **http://localhost:8000**. The header shows a green **LIVE · real Temporal** badge.
+Open **http://localhost:8001**. The header shows a green **LIVE · real Temporal** badge.
 
 > In live mode the app owns the worker, so **don't** run `uv run worker.py` separately — a
 > second worker would break the kill-worker demo. See [`temporal/README.md`](temporal/README.md)
